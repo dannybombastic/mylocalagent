@@ -29,3 +29,4 @@ build/
 .logs/
 # Entorno interactivo local
 .ipynb_checkpoints/
+venv/
