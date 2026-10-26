@@ -1,16 +1,9 @@
 from system_instructions import SYSTEM_INSTRUCTIONS
 from integrations.azure_devops import AzureDevOpsConnector
 
-try:
-    import strandsagents
-    from strandsagents.llms import Ollama
-except ImportError as exc:
-    raise RuntimeError(
-        "No se pudo importar strandsagents. Revisa la instalación de dependencias."
-    ) from exc
+from strands_agents import Ollama, Agent
 
-
-class MyLocalAgent(strandsagents.Agent):
+class MyLocalAgent(Agent):
     def __init__(self):
         self.llm = Ollama(model="qwen3.8:latest")
         self.ado = AzureDevOpsConnector()
