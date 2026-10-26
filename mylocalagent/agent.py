@@ -1,3 +1,4 @@
+# IMPORTANTE: aunque el paquete se instala como 'strands-agents', los módulos se importan como 'strands_agents' con guion bajo
 from system_instructions import SYSTEM_INSTRUCTIONS
 from integrations.azure_devops import AzureDevOpsConnector
 
