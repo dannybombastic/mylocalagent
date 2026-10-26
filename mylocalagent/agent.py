@@ -5,10 +5,14 @@ from system_instructions import SYSTEM_INSTRUCTIONS
 from integrations.azure_devops import AzureDevOpsConnector
 
 from strands import Agent
+from strands.models.ollama import OllamaModel
 
 if __name__ == "__main__":
-    # Personalización mínima inicial basada en el quickstart oficial.
-    agent = Agent()
+    # Usamos explícitamente Ollama para evitar el modelo por defecto de Bedrock,
+    # que requiere credenciales AWS.
+    model = OllamaModel(model_id="qwen3.8:latest")
+    agent = Agent(model=model)
+
     prompt = (
         SYSTEM_INSTRUCTIONS
         + "\n\nINSTRUCCIONES: Integra herramientas MCP y Azure DevOps según tus reglas e instrucciones."
