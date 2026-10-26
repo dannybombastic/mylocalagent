@@ -32,4 +32,6 @@ if __name__ == "__main__":
         + "\n\nINSTRUCCIONES: Integra herramientas MCP y Azure DevOps según tus reglas e instrucciones."
         + "\n\nResume el propósito de este agente y explica qué capacidades base tiene para ayudar en Azure DevOps y tareas DevOps."
     )
-    print(agent(prompt))
+    # No envolver en print(): el Agent usa por defecto un PrintingCallbackHandler
+    # que ya va imprimiendo (streaming) la respuesta por consola (ver doc oficial).
+    agent(prompt)
