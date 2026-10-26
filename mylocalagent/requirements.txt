@@ -1,0 +1,3 @@
+strandsagents
+requests
+azure-devops-mcp
