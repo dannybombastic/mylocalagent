@@ -1,0 +1,31 @@
+__pycache__/
+*.pyc
+*.pyo
+*.swp
+*.swo
+.env
+.vscode/
+.idea/
+*.log
+*.sqlite3
+.DS_Store
+.mylocalagent_env/
+# Model/big files
+*.bin
+*.ckpt
+*.pt
+*.onnx
+# Ollama download/model cache (ajusta si lo usas localmente)
+ollama/
+# Credentials/tokens (no incluir nunca en repo)
+ado_pat.txt
+*.secrets*
+secrets/
+# Strandagents y otros SDK temporales
+*.egg-info/
+dist/
+build/
+.cache/
+.logs/
+# Entorno interactivo local
+.ipynb_checkpoints/
