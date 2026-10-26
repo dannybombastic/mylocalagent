@@ -3,8 +3,7 @@ set -euo pipefail
 
 # Resolve paths relative to this script, not the caller's current directory.
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-VENV_DIR="$PROJECT_ROOT/venv"
+VENV_DIR="$SCRIPT_DIR/venv"
 REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
 
 if [ ! -f "$REQUIREMENTS_FILE" ]; then
