@@ -1,25 +1,27 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Crea entorno virtual en la raíz del repo
-if [ ! -d "../venv" ]; then
-    echo "Creando entorno virtual en ../venv..."
-    python3 -m venv ../venv
-else
-    echo "El entorno virtual ../venv ya existe."
+# Resolve paths relative to this script, not the caller's current directory.
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+VENV_DIR="$PROJECT_ROOT/venv"
+REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
+
+if [ ! -f "$REQUIREMENTS_FILE" ]; then
+    echo "Error: no se encontró requirements.txt junto al script: $REQUIREMENTS_FILE" >&2
+    exit 1
 fi
 
-# Activa el entorno virtual
-source ../venv/bin/activate
-
-# Actualiza pip y wheel
-pip install --upgrade pip wheel
-
-# Instala dependencias del proyecto
-if [ -f "requirements.txt" ]; then
-    pip install -r requirements.txt
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creando entorno virtual en $VENV_DIR..."
+    python3 -m venv "$VENV_DIR"
 else
-    echo "No se encontró requirements.txt en $(pwd), saltando instalación de paquetes."
+    echo "Usando entorno virtual existente en $VENV_DIR."
 fi
 
-echo "Entorno virtual instalado y dependencias listas."
+PYTHON="$VENV_DIR/bin/python"
+
+"$PYTHON" -m pip install --upgrade pip wheel
+"$PYTHON" -m pip install -r "$REQUIREMENTS_FILE"
+
+echo "Entorno virtual preparado y dependencias instaladas."

@@ -1,13 +1,16 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Activa el entorno virtual desde el path correcto
-if [ -d "../venv" ]; then
-    source ../venv/bin/activate
-else
-    echo "El entorno virtual ../venv no existe. Por favor, ejecuta primero setup_venv.sh desde el directorio mylocalagent/"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$(dirname "$SCRIPT_DIR")/venv"
+AGENT_SCRIPT="$SCRIPT_DIR/agent.py"
+
+if [ ! -d "$VENV_DIR" ]; then
+    echo "El entorno virtual $VENV_DIR no existe. Por favor, ejecuta primero setup_venv.sh desde el directorio mylocalagent."
     exit 1
 fi
 
-# Inicia el agente (asumiendo ejecución desde mylocalagent/)
-python agent.py
+source "$VENV_DIR/bin/activate"
+
+echo "Ejecutando agente desde $AGENT_SCRIPT"
+python "$AGENT_SCRIPT"
