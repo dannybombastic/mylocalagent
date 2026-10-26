@@ -1,4 +1,3 @@
 strands-agents[ollama]
 ollama
 requests
-azure-devops-mcp
