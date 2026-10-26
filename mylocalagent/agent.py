@@ -1,31 +1,19 @@
-# IMPORTANTE: aunque el paquete se instala como 'strands-agents', los módulos se importan como 'strands_agents' con guion bajo
+# Basado en la guía oficial SDK Python de strands:
+# https://strandsagents.com/docs/user-guide/sdk/quickstart/python/
+
 from system_instructions import SYSTEM_INSTRUCTIONS
 from integrations.azure_devops import AzureDevOpsConnector
 
-from strands_agents import Ollama, Agent
-
-class MyLocalAgent(Agent):
-    def __init__(self):
-        self.llm = Ollama(model="qwen3.8:latest")
-        self.ado = AzureDevOpsConnector()
-        super().__init__(llm=self.llm)
-        self.name = "MyLocalOllamaAgent"
-        self.system_instructions = SYSTEM_INSTRUCTIONS
-
-    def build_prompt(self, input_text: str) -> str:
-        return f"{self.system_instructions}\n\nUsuario:\n{input_text}\n\nAsistente:"
-
-    def run(self, input_text: str):
-        prompt = self.build_prompt(input_text)
-        output = self.llm.generate(prompt)
-        return output
-
+from strands import Agent
 
 if __name__ == "__main__":
-    agent = MyLocalAgent()
+    # Personalización mínima inicial (se puede extender luego)
+    agent = Agent(
+        system = SYSTEM_INSTRUCTIONS + "\n\nINSTRUCCIONES: Integra herramientas MCP y Azure DevOps según tus reglas e instrucciones."
+        # Tools e integración MCP se añadirán en instancias/props avanzadas
+    )
     prompt = (
         "Resume el propósito de este agente y explica qué capacidades base tiene "
         "para ayudar en Azure DevOps y tareas DevOps."
     )
-    response = agent.run(prompt)
-    print("Respuesta del agente:", response)
+    print(agent(prompt))
