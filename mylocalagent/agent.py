@@ -8,10 +8,7 @@ from strands import Agent
 
 if __name__ == "__main__":
     # Personalización mínima inicial (se puede extender luego)
-    agent = Agent(
-        system = SYSTEM_INSTRUCTIONS + "\n\nINSTRUCCIONES: Integra herramientas MCP y Azure DevOps según tus reglas e instrucciones."
-        # Tools e integración MCP se añadirán en instancias/props avanzadas
-    )
+    agent = Agent()
     prompt = (
         "Resume el propósito de este agente y explica qué capacidades base tiene "
         "para ayudar en Azure DevOps y tareas DevOps."
