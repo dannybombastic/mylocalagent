@@ -5,12 +5,17 @@ from system_instructions import SYSTEM_INSTRUCTIONS
 from integrations.azure_devops import AzureDevOpsConnector
 
 from strands import Agent
-from strands.models.ollama import OllamaModel
 
 if __name__ == "__main__":
-    # Configuración oficial Ollama local según documentación
-    model = OllamaModel(host="http://localhost:11434", model_id="qwen3.8:latest")
-    agent = Agent(model=model)
+    # Import dinámico sólo si Ollama realmente está instalado
+    try:
+        from strands.models.ollama import OllamaModel
+        model = OllamaModel(host="http://localhost:11434", model_id="qwen3.8:latest")
+        agent = Agent(model=model)
+    except ImportError:
+        # Permite ejecutar acciones alternativas si Ollama no está disponible,
+        # útil para testear la integración del core/base sin servicio local
+        agent = Agent()
 
     prompt = (
         SYSTEM_INSTRUCTIONS
