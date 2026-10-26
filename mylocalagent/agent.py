@@ -7,10 +7,11 @@ from integrations.azure_devops import AzureDevOpsConnector
 from strands import Agent
 
 if __name__ == "__main__":
-    # Personalización mínima inicial (se puede extender luego)
+    # Personalización mínima inicial basada en el quickstart oficial.
     agent = Agent()
     prompt = (
-        "Resume el propósito de este agente y explica qué capacidades base tiene "
-        "para ayudar en Azure DevOps y tareas DevOps."
+        SYSTEM_INSTRUCTIONS
+        + "\n\nINSTRUCCIONES: Integra herramientas MCP y Azure DevOps según tus reglas e instrucciones."
+        + "\n\nResume el propósito de este agente y explica qué capacidades base tiene para ayudar en Azure DevOps y tareas DevOps."
     )
     print(agent(prompt))
