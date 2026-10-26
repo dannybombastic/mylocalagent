@@ -29,4 +29,9 @@ build/
 .logs/
 # Entorno interactivo local
 .ipynb_checkpoints/
-venv/
+venv/*
+*.pyc
+*.pyo
+*.swp
+*.swo
+.graphify
