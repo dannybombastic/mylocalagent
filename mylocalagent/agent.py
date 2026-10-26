@@ -7,14 +7,24 @@ from integrations.azure_devops import AzureDevOpsConnector
 from strands import Agent
 
 if __name__ == "__main__":
-    # Import dinámico sólo si Ollama realmente está instalado
+    # Import dinámico sólo si Ollama realmente está instalado y operando.
+    use_ollama = False
     try:
         from strands.models.ollama import OllamaModel
+        import requests
+        # Probar si Ollama server responde...
+        response = requests.get("http://localhost:11434")
+        if response.ok:
+            use_ollama = True
+    except Exception:
+        use_ollama = False
+
+    if use_ollama:
         model = OllamaModel(host="http://localhost:11434", model_id="qwen3.8:latest")
         agent = Agent(model=model)
-    except ImportError:
-        # Permite ejecutar acciones alternativas si Ollama no está disponible,
-        # útil para testear la integración del core/base sin servicio local
+    else:
+        print("¡Ollama no está disponible! Usando sólo el core del agente Strands sin modelo local Ollama. "
+              "Si ves errores de AWS/Bedrock, asegúrate de que Ollama esté activo y accesible localmente.")
         agent = Agent()
 
     prompt = (
