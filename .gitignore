@@ -8,6 +8,7 @@ __pycache__/
 .idea/
 *.log
 *.sqlite3
+node_modules/
 .DS_Store
 .mylocalagent_env/
 # Model/big files

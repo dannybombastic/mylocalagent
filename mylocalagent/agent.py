@@ -3,19 +3,45 @@
 # Integración MCP: https://strandsagents.com/docs/user-guide/sdk/tools/mcp-tools/
 
 import os
+import re
 import shutil
 
 from system_instructions import SYSTEM_INSTRUCTIONS
 
 from strands import Agent
 
-# Ruta local del servidor MCP oficial de Azure DevOps (github.com/microsoft/azure-devops-mcp),
-# el mismo binario que usa VS Code (ver ~/.config/Code/User/mcp.json). Se puede
-# sobreescribir con la variable de entorno ADO_MCP_SERVER_PATH si vive en otra ruta.
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Servidor MCP oficial de Azure DevOps (github.com/microsoft/azure-devops-mcp),
+# instalado dentro del propio proyecto por setup_venv.sh (ver package.json), para
+# que el repo sea autocontenido. Se puede sobreescribir con ADO_MCP_SERVER_PATH
+# si prefieres apuntar a otra instalación.
 ADO_MCP_SERVER_PATH = os.environ.get(
     "ADO_MCP_SERVER_PATH",
-    os.path.expanduser("~/Documents/azure-devops-mcp/dist/index.js"),
+    os.path.join(PROJECT_DIR, "node_modules", "@azure-devops", "mcp", "dist", "index.js"),
 )
+
+# El servidor expone ~70 tools (work items, repos, pipelines, wikis, test plans,
+# Advanced Security...) cuyas definiciones por sí solas ocupan ~20k tokens en CADA
+# llamada al modelo. En conversaciones de varias rondas (consulta -> resultado ->
+# siguiente consulta) eso desborda el num_ctx y Ollama acaba truncando el historial
+# más antiguo, perdiendo el mensaje de usuario (ollama._types.ResponseError: "no user
+# query found in messages"). Se limita a los dominios que este agente realmente usa
+# (work items, proyectos/equipos, sprints, repos y pipelines de lectura) para dejar
+# presupuesto de contexto a la conversación real.
+ADO_MCP_ALLOWED_TOOLS = [
+    re.compile(r"^core_"),
+    re.compile(r"^wit_"),
+    re.compile(r"^work_"),
+    "repo_list_repos_by_project",
+    "repo_list_pull_requests_by_repo_or_project",
+    "repo_get_pull_request_by_id",
+    "pipelines_get_builds",
+    "pipelines_list_runs",
+    "pipelines_run_pipeline",
+    "pipelines_get_build_status",
+    "search_workitem",
+]
 
 
 def build_ado_mcp_client():
@@ -53,7 +79,8 @@ def build_ado_mcp_client():
                 args=[ADO_MCP_SERVER_PATH, org, "--authentication", "env"],
                 env=dict(os.environ),
             )
-        )
+        ),
+        tool_filters={"allowed": ADO_MCP_ALLOWED_TOOLS},
     )
 
 
@@ -79,14 +106,19 @@ if __name__ == "__main__":
         print("Herramientas MCP de Azure DevOps conectadas.")
 
     if use_ollama:
-        # num_ctx por defecto en Ollama es 4096 tokens. Las ~70 tools del MCP de Azure
-        # DevOps ocupan sólo en sus definiciones ~18k tokens, así que con el valor por
-        # defecto el modelo ni siquiera llega a "ver" la mayoría y acaba alucinando que
-        # no existen. Se amplía para que quepan tools + system prompt + conversación.
+        # num_ctx por defecto en Ollama es 4096 tokens. Incluso con el set de tools ya
+        # recortado (ver ADO_MCP_ALLOWED_TOOLS) más el system prompt y varias rondas de
+        # tool-calling (consulta -> resultado -> siguiente consulta) se necesitan bastantes
+        # más tokens de los que caben por defecto. 32768 deja margen razonable sin forzar
+        # tanto offload a CPU que el modelo se vuelva impracticablemente lento.
+        # temperature baja: el modelo por defecto (1.0) tiende a explorar más y a
+        # encadenar varios tool calls especulativos por turno, lo que agota antes el
+        # contexto; con un valor más conservador es más probable que vaya paso a paso.
         model = OllamaModel(
             host="http://localhost:11434",
             model_id="qwen3.8:latest",
-            options={"num_ctx": 24576},
+            options={"num_ctx": 32768},
+            temperature=0.3,
         )
         agent = Agent(model=model, system_prompt=SYSTEM_INSTRUCTIONS, tools=tools)
     else:
@@ -95,7 +127,8 @@ if __name__ == "__main__":
         agent = Agent(system_prompt=SYSTEM_INSTRUCTIONS, tools=tools)
 
     print("Agente DevOps local listo. Escribe tu mensaje y pulsa Enter.")
-    print("Comandos: 'salir', 'exit' o 'quit' para terminar; Ctrl+C también sale.\n")
+    print("Comandos: 'salir', 'exit' o 'quit' para terminar; 'reiniciar' para vaciar el")
+    print("historial de la conversación (útil si el contexto se agota); Ctrl+C también sale.\n")
 
     # El objeto `agent` acumula el historial de conversación en self.messages,
     # así que reutilizarlo en cada vuelta del bucle mantiene el contexto del chat.
@@ -111,7 +144,19 @@ if __name__ == "__main__":
         if user_input.lower() in {"salir", "exit", "quit"}:
             print("Saliendo...")
             break
+        if user_input.lower() in {"reiniciar", "reset"}:
+            agent.messages.clear()
+            print("Historial de conversación vaciado.")
+            continue
 
-        # No envolver en print(): el Agent usa por defecto un PrintingCallbackHandler
-        # que ya va imprimiendo (streaming) la respuesta por consola (ver doc oficial).
-        agent(user_input)
+        try:
+            # No envolver en print(): el Agent usa por defecto un PrintingCallbackHandler
+            # que ya va imprimiendo (streaming) la respuesta por consola (ver doc oficial).
+            agent(user_input)
+        except Exception as exc:
+            # Una ronda de tool-calling muy larga puede agotar el num_ctx del modelo
+            # (Ollama acaba truncando el historial y el chat template falla). En vez de
+            # tumbar el proceso, avisamos y dejamos seguir la conversación.
+            print(f"\n[Error al generar la respuesta: {exc}]")
+            print("Si el problema persiste, escribe 'reiniciar' para vaciar el historial.")
+
