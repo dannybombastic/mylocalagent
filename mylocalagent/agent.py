@@ -8,9 +8,8 @@ from strands import Agent
 from strands.models.ollama import OllamaModel
 
 if __name__ == "__main__":
-    # Usamos explícitamente Ollama para evitar el modelo por defecto de Bedrock,
-    # que requiere credenciales AWS.
-    model = OllamaModel(model_id="qwen3.8:latest")
+    # Configuración oficial Ollama local según documentación
+    model = OllamaModel(host="http://localhost:11434", model_id="qwen3.8:latest")
     agent = Agent(model=model)
 
     prompt = (
